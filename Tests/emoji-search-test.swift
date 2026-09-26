@@ -178,6 +178,23 @@ struct EmojiSearchTests {
         expect(index.search(" ", frequent: frequent).isEmpty, "empty query")
         expect(index.search("face", frequent: frequent, limit: 0).isEmpty, "zero limit")
 
+        // AI answers land on catalog glyphs: presentation, tone and junk never reach the grid.
+        let resolve: (String) -> String? = { index.entry(for: $0)?.glyph }
+        expect(
+            EmojiSuggestion.glyphs(in: ["🛠", "❤‍🔥", "👩🏽‍💻", "🏳‍🌈"], resolve: resolve)
+                == ["🛠️", "❤️‍🔥", "👩‍💻", "🏳️‍🌈"],
+            "suggestions resolve bare, toned and ZWJ spellings to catalog glyphs")
+        expect(
+            EmojiSuggestion.glyphs(in: ["🚀🚀", "rocket", "🚀", "💰"], resolve: resolve) == ["🚀", "💰"],
+            "suggestions drop text and repeats, and split a string of several emoji")
+        expect(
+            EmojiSuggestion.glyphs(in: ["😀😃😄😁😆😅🤣😂🙂🙃😉😊"], resolve: resolve)
+                .count == EmojiSuggestion.maximumCount,
+            "suggestions stop at the maximum count")
+        expect(
+            EmojiSuggestion.key("  Elon   MUSK ") == "elon musk",
+            "suggestion key folds case and spacing")
+
         if failures == 0 {
             print("emoji-search-test: all checks passed")
         } else {

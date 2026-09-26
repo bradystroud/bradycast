@@ -15,15 +15,17 @@ A palette sub-screen (reached like Clipboard / Calculator History) presenting a 
 | --- | --- |
 | `Model/EmojiCatalog.swift` | The catalog model — groups, names, keywords |
 | `Model/EmojiGridGeometry.swift` | Pure grid math — columns, item sizing |
+| `Model/EmojiSuggestion.swift` | AI answer parsing — catalog lookup, dedupe, query key, prompt |
 | `Model/EmojiData.generated.swift` | The dataset |
 | `Service/EmojiIndex.swift` | Search index over the catalog |
+| `Service/EmojiSuggester.swift` | On-device AI suggestions, debounced and cached |
 | `Service/FrequentEmojiStore.swift` | Persisted most-frequently-used emoji |
 | `Service/PinnedEmojiStore.swift` | Persisted pins, in the order the user set |
 | `UI/EmojiGridView.swift` | The SwiftUI grid |
 | `UI/EmojiScreen.swift`, `UI/EmojiCoordinator.swift` | The palette screen and its action surface |
 
-The index and the store are **effects**, so they live under `Service/` — only the three files above them
-are pure.
+The index, the suggester and the stores are **effects**, so they live under `Service/` — only the
+`Model/` files above them are pure.
 
 ## Search
 
@@ -37,6 +39,23 @@ are pure.
 - **Colon-wrapped queries are unwrapped**, so `:+1:` reuses CLDR's `+1` annotation with no alias table.
 - **Usage breaks ties, never tiers.** The top 100 glyphs from `FrequentEmojiStore.top` add a 100…1
   bonus, and the store's identity and revision are in the search memo key.
+
+## AI Results
+
+Keywords cannot read a person, brand or mood, so "elon musk" finds nothing and "musk" finds 🎹.
+`EmojiSuggester` asks Apple's on-device model (FoundationModels, guided generation) for up to ten
+emoji and shows them as an **AI Results** section above Results.
+
+- **On-device only.** No network and no setting: when Apple Intelligence is off or still
+  downloading, the section never appears and keyword search is unchanged.
+- **The view's `.task(id: query)` is the debounce.** The suggester sleeps 350 ms before it asks, so
+  the next keystroke cancels the task, the sleep and any generation in flight.
+- **Only catalog glyphs render.** `EmojiSuggestion.glyphs` strips presentation selectors and skin
+  tones to find the catalog's own spelling, drops text and repeats, and caps the count.
+- **Answers are cached per query key** (lower-cased, spaces folded), 200 deep. A failure or refusal
+  is not cached, so retyping asks again.
+- **The arrival does not move a chosen cell.** If the user has moved the selection, it shifts by the
+  section's size so the same emoji stays selected; an untouched selection stays on the first cell.
 
 ## Rendering
 

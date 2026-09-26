@@ -4,10 +4,18 @@ A personal build of [Tinycast](https://github.com/abue-ammar/tinycast), signed w
 Developer ID instead of upstream's self-signed identity, and cut from reviewed stable tags instead
 of the daily release stream.
 
-The source tree is upstream's, unchanged. Everything Bradycast-specific is in
-`Scripts/bradycast.sh`: the name, bundle id `com.bradycast.app`, and the signing identity go on the
-`xcodebuild` line, the same way upstream's `release.yml` sets them per channel. That keeps
-`git merge <tag>` conflict-free.
+The build identity is all in `Scripts/bradycast.sh`: the name, bundle id `com.bradycast.app`, and
+the signing identity go on the `xcodebuild` line, the same way upstream's `release.yml` sets them per
+channel.
+
+The source carries one fork-only feature, kept small so a tag merge rarely conflicts:
+
+- **AI emoji search** — `Features/Emoji/Model/EmojiSuggestion.swift` and
+  `Features/Emoji/Service/EmojiSuggester.swift` are new. The edits to upstream files are one line in
+  `AppCore.swift`, the section in `EmojiGridView.swift`, the task in `EmojiScreen.swift`, the harness
+  line in `Scripts/run-tests.sh`, the tests in `Tests/emoji-search-test.swift`, and
+  `docs/features/emoji.md`. On a conflict in `Tinycast.xcodeproj`, take upstream's and run
+  `xcodegen generate`.
 
 `com.bradycast.app` lands on `ReleaseChannel.development`, so the app never checks GitHub for
 updates. Updating is a deliberate step here, so run `Scripts/bradycast.sh update` about every week

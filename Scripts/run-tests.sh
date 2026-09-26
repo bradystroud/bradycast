@@ -177,6 +177,7 @@ run emoji-test             Tinycast/Features/Emoji/Model/EmojiCatalog.swift \
                            Tinycast/Features/Emoji/Model/EmojiGridGeometry.swift \
                            Tinycast/Features/Emoji/Model/EmojiData.generated.swift
 run emoji-search-test      Tinycast/Features/Emoji/Model/EmojiCatalog.swift \
+                           Tinycast/Features/Emoji/Model/EmojiSuggestion.swift \
                            Tinycast/Features/Emoji/Model/EmojiData.generated.swift \
                            Tinycast/Features/Emoji/Service/EmojiIndex.swift \
                            Tinycast/Features/Emoji/Service/FrequentEmojiStore.swift \

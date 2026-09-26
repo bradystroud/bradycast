@@ -10,11 +10,13 @@ struct EmojiGridSection: Identifiable {
 }
 
 enum EmojiGrid {
+    static let suggestionsTitle = "AI Results"
+
     /// Ranked results while searching, otherwise pinned, frequent and catalog sections in order.
     @MainActor
     static func sections(
         query: String, index: EmojiIndex, frequent: FrequentEmojiStore,
-        pinned: PinnedEmojiStore, filter: EmojiCategoryFilter
+        pinned: PinnedEmojiStore, filter: EmojiCategoryFilter, suggestions: [String] = []
     ) -> [EmojiGridSection] {
         var sections: [EmojiGridSection] = []
         var start = 0
@@ -43,21 +45,22 @@ enum EmojiGrid {
                 }
             }
         } else {
-            let results = index.search(query, frequent: frequent)
-            let filtered: [EmojiEntry]
-            switch filter {
-            case .all:
-                filtered = results
-            case .pinned:
-                let glyphs = Set(pinned.glyphs)
-                filtered = results.filter { glyphs.contains($0.glyph) }
-            case .frequentlyUsed:
-                let glyphs = Set(frequent.top())
-                filtered = results.filter { glyphs.contains($0.glyph) }
-            case .category(let category):
-                filtered = results.filter { $0.category == category }
+            func filtered(_ results: [EmojiEntry]) -> [EmojiEntry] {
+                switch filter {
+                case .all:
+                    return results
+                case .pinned:
+                    let glyphs = Set(pinned.glyphs)
+                    return results.filter { glyphs.contains($0.glyph) }
+                case .frequentlyUsed:
+                    let glyphs = Set(frequent.top())
+                    return results.filter { glyphs.contains($0.glyph) }
+                case .category(let category):
+                    return results.filter { $0.category == category }
+                }
             }
-            append("Results", filtered)
+            append(suggestionsTitle, filtered(suggestions.compactMap(index.entry(for:))))
+            append("Results", filtered(index.search(query, frequent: frequent)))
         }
         return sections
     }

@@ -32,7 +32,13 @@ struct EmojiScreen: PaletteScreen {
     private var sections: [EmojiGridSection] {
         EmojiGrid.sections(
             query: vm.query, index: index, frequent: frequent, pinned: pinned,
-            filter: vm.emojiCategoryFilter)
+            filter: vm.emojiCategoryFilter,
+            suggestions: core.emojiSuggester.glyphs(for: vm.query))
+    }
+
+    /// AI Results lead the grid, so their arrival moves every keyword result down by this much.
+    private var suggestionCount: Int {
+        sections.first { $0.title == EmojiGrid.suggestionsTitle }?.entries.count ?? 0
     }
 
     /// Flat grid order across sections — what the selection indexes.
@@ -111,8 +117,17 @@ struct EmojiScreen: PaletteScreen {
         AnyView(content(selection: selection, scroll: scroll))
     }
 
-    @ViewBuilder
     private func content(selection: Int, scroll: ScrollIntent) -> some View {
+        grid(selection: selection, scroll: scroll)
+            .task(id: vm.query) { await core.emojiSuggester.suggest(for: vm.query, index: index) }
+            .onChange(of: suggestionCount) { old, new in
+                // A cell the user moved to stays selected; an untouched first cell stays first.
+                if vm.selection > 0 { vm.selection = max(vm.selection + new - old, 0) }
+            }
+    }
+
+    @ViewBuilder
+    private func grid(selection: Int, scroll: ScrollIntent) -> some View {
         let sections = sections
         if !index.isLoaded {
             EmptyResults(text: "Loading emoji…")
