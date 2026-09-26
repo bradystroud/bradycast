@@ -10,19 +10,21 @@ The source tree is upstream's, unchanged. Everything Bradycast-specific is in
 `git merge <tag>` conflict-free.
 
 `com.bradycast.app` lands on `ReleaseChannel.development`, so the app never checks GitHub for
-updates. Updating is a deliberate step here.
+updates. Updating is a deliberate step here, so run `Scripts/bradycast.sh update` about every week
+or two. Upstream merges dozens of PRs a week, and a stale fork turns into a large, slow review.
 
 ## Branches
 
-- `main` — the last reviewed upstream stable tag, plus this file, the script and `.gitignore`.
+- `main` — the last reviewed upstream stable tag, plus this file, the script and `.gitignore`, and
+  a fork note at the top of `AGENTS.md`.
 - `upstream` remote — `abue-ammar/tinycast`. Never build from its `main`.
 
 ## Update
 
 ```sh
 Scripts/bradycast.sh update            # fetch, list stable tags newer than the one on main
-git log --oneline v0.10.23..v0.10.30   # read what changed; PR numbers link to upstream
-Scripts/bradycast.sh update v0.10.30   # merge the tag
+git log --oneline v0.11.3..v0.11.9    # read what changed; PR numbers link to upstream
+Scripts/bradycast.sh update v0.11.9    # merge the tag
 Scripts/bradycast.sh install           # build, sign, replace /Applications/Bradycast.app, relaunch
 git push
 ```
@@ -30,6 +32,19 @@ git push
 Skip a tag if the diff touches `Features/Updates`, `Features/Extensions/Service`,
 `Platform/KeychainSecretStore.swift`, the entitlements, or `.github/workflows` without a reason you
 understand. Those are the trust boundaries the original audit looked at.
+
+### If upstream rewrites its history
+
+Upstream rewrote history once, between v0.10.23 and v0.11.3, and moved its tags. The only merge base
+left was the first commit, so a plain merge conflicted everywhere. The fix keeps `main`
+fast-forward: take the tag's tree whole, then restore the fork's files.
+
+```sh
+git fetch --tags --force upstream
+git merge --no-commit -s ours <tag>
+git read-tree -u --reset <tag>
+git checkout HEAD -- BRADYCAST.md Scripts/bradycast.sh   # then re-add the AGENTS.md fork note
+```
 
 ## Build only
 
