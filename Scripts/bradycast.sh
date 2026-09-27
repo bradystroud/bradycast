@@ -1,8 +1,9 @@
 #!/bin/sh
 # Bradycast: a personal build of Tinycast, signed with Brady's Developer ID.
 #
-# The fork carries no source changes. Name and bundle id go on the xcodebuild line, the same way
-# upstream's release.yml sets them per channel, so `git merge <upstream tag>` stays clean.
+# Name and bundle id go on the xcodebuild line, the same way upstream's release.yml sets them per
+# channel. The build runs from a copy in build/src where bradycast-rebrand.py renames the text a
+# user reads, so the committed source keeps upstream's name and `git merge <tag>` stays clean.
 #
 # A bundle id other than com.tinycast.app puts the app on ReleaseChannel.development, which never
 # checks GitHub for updates. Updates happen here, on purpose: `bradycast.sh update <tag>`.
@@ -18,6 +19,7 @@ IDENTITY="Developer ID Application: BRADY MATTHEW STROUD (AQ6HPWB3D9)"
 TEAM="AQ6HPWB3D9"
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+SRC="$ROOT/build/src"
 DERIVED="$ROOT/build/DerivedData"
 APP="$DERIVED/Build/Products/Release/$NAME.app"
 DEST="/Applications/$NAME.app"
@@ -26,7 +28,10 @@ version() { git -C "$ROOT" describe --tags --abbrev=0 --match 'v[0-9]*' | sed 's
 build_number() { git -C "$ROOT" rev-list --count HEAD; }
 
 build() {
-  cd "$ROOT"
+  echo "==> Copying source to $SRC"
+  rsync -a --delete --exclude /.git --exclude /build/ --exclude /website/ "$ROOT/" "$SRC/"
+  python3 "$ROOT/Scripts/bradycast-rebrand.py" "$SRC"
+  cd "$SRC"
   echo "==> Building $NAME $(version) ($(build_number))"
   xcodebuild -project Tinycast.xcodeproj -scheme Tinycast -configuration Release \
     -derivedDataPath "$DERIVED" \

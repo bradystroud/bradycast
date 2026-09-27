@@ -8,6 +8,12 @@ The build identity is all in `Scripts/bradycast.sh`: the name, bundle id `com.br
 the signing identity go on the `xcodebuild` line, the same way upstream's `release.yml` sets them per
 channel.
 
+The build runs from a copy in `build/src`, where `Scripts/bradycast-rebrand.py` renames every
+user-visible "Tinycast" (Swift strings, `Info.plist` usage text, extension-runtime errors) to
+"Bradycast". The committed source keeps upstream's name, so the rename never conflicts. The About
+window's credits and community link, the copyright and the `tinycast://` scheme stay upstream's. If
+the script reports that a rename matched nothing, upstream moved that text: update the script.
+
 The source carries one fork-only feature, kept small so a tag merge rarely conflicts:
 
 - **AI emoji search** — `Features/Emoji/Model/EmojiSuggestion.swift` and
