@@ -8,6 +8,8 @@ final class EmojiSuggester {
     /// The key the published glyphs answer, so a stale answer never shows under a newer query.
     private(set) var answeredKey = ""
     private(set) var glyphs: [String] = []
+    /// The key a generation is running for, from the pause before it until its answer lands.
+    private(set) var pendingKey: String?
 
     @ObservationIgnored private var cache: [String: [String]] = [:]
     @ObservationIgnored private var cacheOrder: [String] = []
@@ -15,6 +17,10 @@ final class EmojiSuggester {
 
     func glyphs(for query: String) -> [String] {
         EmojiSuggestion.key(query) == answeredKey ? glyphs : []
+    }
+
+    func isLoading(for query: String) -> Bool {
+        pendingKey != nil && EmojiSuggestion.key(query) == pendingKey
     }
 
     /// Run from a view's `.task(id:)`, whose cancellation on the next keystroke is the debounce.
@@ -26,6 +32,9 @@ final class EmojiSuggester {
             return
         }
         guard index.isLoaded, SystemLanguageModel.default.isAvailable else { return }
+        pendingKey = key
+        // The next keystroke's task has already claimed the key by the time this one unwinds.
+        defer { if pendingKey == key { pendingKey = nil } }
         do {
             try await Task.sleep(for: EmojiSuggestion.debounce)
             let generation = Task.detached(priority: .userInitiated) {

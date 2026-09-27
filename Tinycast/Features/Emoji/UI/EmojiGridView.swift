@@ -82,11 +82,14 @@ private struct EmojiGridRow: Identifiable {
 private enum EmojiGridItem: Identifiable {
     case header(id: String, title: String, count: Int)
     case row(EmojiGridRow)
+    /// AI Results still generating: a header and a row of cells that nothing can select.
+    case suggestionsLoading
 
     var id: String {
         switch self {
         case .header(let id, _, _): return id
         case .row(let row): return row.id
+        case .suggestionsLoading: return "suggestions-loading"
         }
     }
 }
@@ -101,13 +104,14 @@ struct EmojiGridView: View {
     let columns: EmojiGridColumns
     /// The pending scroll request; mouse selection leaves it untouched.
     let scroll: ScrollIntent
+    var loadingSuggestions = false
     let onSelect: (Int) -> Void
     let onActivate: () -> Void
     let onActions: (Int) -> Void
 
     /// Headers + rows in visible order; rows are the scroll targets. docs/features/emoji.md
     private var items: [EmojiGridItem] {
-        var items: [EmojiGridItem] = []
+        var items: [EmojiGridItem] = loadingSuggestions ? [.suggestionsLoading] : []
         for section in sections {
             items.append(
                 .header(
@@ -152,6 +156,8 @@ struct EmojiGridView: View {
                         case .header(_, let title, let count):
                             EmojiSectionHeader(
                                 title: title, count: count, isFirst: item.id == items.first?.id)
+                        case .suggestionsLoading:
+                            EmojiSuggestionsLoading(columns: columns)
                         case .row(let row):
                             EmojiGridRowView(
                                 row: row, selection: selection, tone: tone, columns: columns,
@@ -203,6 +209,41 @@ private struct EmojiSectionHeader: View {
     }
 }
 
+/// Where AI Results will land: a spinner in the header and a pulsing row in the grid's own cells.
+private struct EmojiSuggestionsLoading: View {
+    @Environment(\.metrics) private var metrics
+    let columns: EmojiGridColumns
+
+    var body: some View {
+        let size = EmojiGridRowView.cellSize(metrics, columns: columns)
+        let shape = RoundedRectangle(cornerRadius: metrics.radius.emojiCell, style: .continuous)
+        VStack(spacing: 0) {
+            HStack(spacing: metrics.spacing.sm) {
+                Text(EmojiGrid.suggestionsTitle)
+                    .foregroundStyle(Theme.Colors.textSecondary)
+                ProgressView().controlSize(.mini)
+                Spacer(minLength: 0)
+            }
+            .font(metrics.typography.sectionHeader)
+            .padding(.top, metrics.spacing.xs)
+            .padding(.bottom, metrics.spacing.md)
+            HStack(spacing: metrics.spacing.md) {
+                ForEach(0..<columns.rawValue, id: \.self) { column in
+                    shape.fill(Theme.Colors.emojiCell)
+                        .frame(width: size, height: size)
+                        .phaseAnimator([0.35, 1]) { cell, opacity in
+                            cell.opacity(opacity)
+                        } animation: { _ in
+                            .easeInOut(duration: 0.7).delay(Double(column) * 0.06)
+                        }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .accessibilityLabel("Loading AI results")
+    }
+}
+
 /// One grid row, owning all interaction for its cells. See docs/features/emoji.md#rendering.
 private struct EmojiGridRowView: View {
     @Environment(\.metrics) private var metrics
@@ -220,8 +261,11 @@ private struct EmojiGridRowView: View {
     private var spacing: CGFloat { metrics.spacing.md }
 
     /// The palette has a fixed metric width, so cells can be square without a measuring render pass.
-    private var cellSize: CGFloat {
+    private var cellSize: CGFloat { Self.cellSize(metrics, columns: columns) }
+
+    static func cellSize(_ metrics: InterfaceMetrics, columns: EmojiGridColumns) -> CGFloat {
         let count = CGFloat(columns.rawValue)
+        let spacing = metrics.spacing.md
         let contentWidth = metrics.size.panelWidth - metrics.size.emojiGridInset * 2
         return (contentWidth - spacing * (count - 1)) / count
     }

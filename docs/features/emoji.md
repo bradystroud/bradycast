@@ -48,6 +48,8 @@ emoji and shows them as an **AI Results** section above Results.
 
 - **On-device only.** No network and no setting: when Apple Intelligence is off or still
   downloading, the section never appears and keyword search is unchanged.
+- **Loading shows from the first keystroke** the model can answer: an AI Results header with a
+  spinner over a row of pulsing cells. Nothing in it is selectable, and a cached answer skips it.
 - **The view's `.task(id: query)` is the debounce.** The suggester sleeps 350 ms before it asks, so
   the next keystroke cancels the task, the sleep and any generation in flight.
 - **Only catalog glyphs render.** `EmojiSuggestion.glyphs` strips presentation selectors and skin

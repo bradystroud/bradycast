@@ -129,9 +129,10 @@ struct EmojiScreen: PaletteScreen {
     @ViewBuilder
     private func grid(selection: Int, scroll: ScrollIntent) -> some View {
         let sections = sections
+        let loadingSuggestions = core.emojiSuggester.isLoading(for: vm.query)
         if !index.isLoaded {
             EmptyResults(text: "Loading emoji…")
-        } else if sections.isEmpty {
+        } else if sections.isEmpty, !loadingSuggestions {
             EmptyResults(text: "No emoji found")
         } else {
             EmojiGridView(
@@ -140,6 +141,7 @@ struct EmojiScreen: PaletteScreen {
                 tone: tone,
                 columns: columns,
                 scroll: scroll,
+                loadingSuggestions: loadingSuggestions,
                 onSelect: { vm.selection = $0 },
                 onActivate: { activate(at: vm.selection) },
                 onActions: { flat in
