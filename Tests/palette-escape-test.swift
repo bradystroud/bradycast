@@ -75,16 +75,16 @@ struct PaletteEscapeTests {
             "a clipboard screen opened from the root search returns to it")
         expect(
             resolve(mode: .clipboard),
-            .hidePalette,
-            "the same screen summoned by its own hotkey is a root, so it hides")
+            .rootSearch,
+            "the same screen summoned by its own hotkey falls to the root search")
         expect(
             resolve(mode: .ai, canGoBack: true),
             .goBack,
             "chat is no different: reached from the root, it goes back to it")
         expect(
             resolve(mode: .ai),
-            .hidePalette,
-            "chat summoned by its own hotkey hides rather than falling back to the launcher")
+            .rootSearch,
+            "chat summoned by its own hotkey falls back to the launcher")
         expect(
             resolve(query: "notes", mode: .clipboard, canGoBack: true),
             .clearQuery,

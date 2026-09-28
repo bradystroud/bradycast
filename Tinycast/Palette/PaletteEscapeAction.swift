@@ -8,6 +8,8 @@ enum PaletteEscapeAction: Equatable {
     case clearQuery
     case exitExtensionScreen
     case goBack
+    /// A screen summoned by its own hotkey has no back step, so it falls to the root search.
+    case rootSearch
     case hidePalette
 
     static func resolve(
@@ -21,7 +23,8 @@ enum PaletteEscapeAction: Equatable {
         guard behavior == .navigateBackOrClose else { return .hidePalette }
         // An extension pops its own navigation stack before the command is left.
         if mode == .extensionCommand { return .exitExtensionScreen }
-        return canGoBack ? .goBack : .hidePalette
+        if canGoBack { return .goBack }
+        return mode == .launcher ? .hidePalette : .rootSearch
     }
 
     static func menu(query: String) -> Self {

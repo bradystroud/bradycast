@@ -77,7 +77,9 @@ SwiftUI search field re-focuses. `prepare` is one of four motions over the scree
 
 Hiding schedules Pop to Root Search, and `PaletteWindowController.popToRoot` is its only path: the
 palette returns to the launcher *and* chat starts a new conversation, at once or after
-`popToRootTimeout`, unless a re-summon inside that window consumes the pending reset first. An
+`popToRootTimeout`, unless a re-summon inside that window consumes the pending reset first. The
+launcher hotkey only ever restores a preserved launcher: it always lands on the root search, and a
+screen summoned by its own hotkey is restored by that hotkey alone. An
 unfinished chat is a thing being done, exactly like a typed query, so the screen and the conversation
 are reset together rather than the screen alone. A reply still streaming is the one exception — it was
 asked for, and resetting would throw the answer away. Nothing is lost either way: a conversation is
@@ -138,12 +140,12 @@ top, which would throw away the very selection being restored.
 
 **Escape clears a non-empty query before it leaves the screen**, so one press clears and the next
 leaves: an extension screen exits itself first (it keeps a stack the palette cannot see), then a
-pushed screen pops, and a root hides the palette. A focused inline argument field is a rung above the
-query, so Escape hands focus back to the search field first — the query that found the command is
-still there to be cleared by the next press. A bare backspace in an empty field takes the same step
-**but never closes**: on a root screen summoned by its own hotkey it falls to the root search, which
-is the step Escape would have taken had that screen been reached by typing its name. ⌘⎋ skips the
-whole stack for that same root search from any depth.
+pushed screen pops, a screen summoned by its own hotkey falls to the root search, and only the
+launcher hides the palette. Escape is a back button, so it never closes a screen the user has not
+yet backed out of. A focused inline argument field is a rung above the query, so Escape hands focus
+back to the search field first — the query that found the command is still there to be cleared by
+the next press. A bare backspace in an empty field takes the same step **but never closes**. ⌘⎋
+skips the whole stack for that same root search from any depth.
 
 `EscapeKeyBehavior` (General settings) can trade the walk back for the old behavior: under
 `closeAndPopToRoot` an empty field closes the window and resets it immediately, whatever Pop to Root
@@ -152,8 +154,7 @@ Search says. Clearing the query is still the first press either way.
 The header draws a back chevron on **every** screen but the launcher: leaving is what the icon
 slot means once you are off the root, and a slot that changed shape with provenance would read
 as two different controls. Where the click lands still depends on the stack — a pushed screen
-pops, a root one closes — so `backHelp` says which, rather than promising a step that is really
-a close. It lights to `textPrimary` under the pointer over `Theme.Duration.hover`, and
+pops, a root one falls to the root search — so `backHelp` says which. It lights to `textPrimary` under the pointer over `Theme.Duration.hover`, and
 `HeaderBackButton` keeps that hover state to itself so the header around it never re-renders.
 
 The launcher advertises the first hop in the header — `AI Chat` beside a `⇥` cap, the footer's own

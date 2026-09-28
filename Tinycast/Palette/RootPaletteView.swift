@@ -535,6 +535,8 @@ struct RootPaletteView: View {
                     core.extensionCoordinator.exitExtensionScreen()
                 case .goBack:
                     goBack()
+                case .rootSearch:
+                    vm.prepare(mode: .launcher)
                 case .hidePalette:
                     core.paletteCoordinator.hidePalette()
                     // This behavior promises a root search on reopen, whatever the delay says.
@@ -1326,10 +1328,9 @@ struct RootPaletteView: View {
         vm.canGoBack || (vm.mode == .extensionCommand && extensions.navigationDepth > 1)
     }
 
-    /// Never promises a step the click does not take: a root screen closes rather than backs.
+    /// Never promises a step the click does not take: a root screen falls to the root search.
     private var backHelp: String {
-        let escape = hasBackStep ? "Esc to go back" : "Esc to close"
-        return "\(escape) or ⌘ Esc to go to root search"
+        hasBackStep ? "Esc to go back or ⌘ Esc to go to root search" : "Esc to go to root search"
     }
 
     private func goBack() {
@@ -1337,7 +1338,7 @@ struct RootPaletteView: View {
             core.extensionCoordinator.exitExtensionScreen()
             return
         }
-        if !vm.pop() { core.paletteCoordinator.hidePalette() }
+        if !vm.pop() { vm.prepare(mode: .launcher) }
     }
 
     private func activateSelection() {

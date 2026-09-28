@@ -16,7 +16,7 @@ Abue Ammar's copyright, and Support stays "Support Tinycast", because its checko
 `tinycast://` scheme keeps its name. If the script reports that an edit or rename matched
 nothing, upstream moved that text: update the script.
 
-The source carries one fork-only feature, kept small so a tag merge rarely conflicts:
+The source carries two fork-only changes, kept small so a tag merge rarely conflicts:
 
 - **AI emoji search** — `Features/Emoji/Model/EmojiSuggestion.swift` and
   `Features/Emoji/Service/EmojiSuggester.swift` are new. The edits to upstream files are one line in
@@ -24,6 +24,10 @@ The source carries one fork-only feature, kept small so a tag merge rarely confl
   line in `Scripts/run-tests.sh`, the tests in `Tests/emoji-search-test.swift`, and
   `docs/features/emoji.md`. On a conflict in `Tinycast.xcodeproj`, take upstream's and run
   `xcodegen generate`.
+- **Escape as a back button** — on a screen summoned by its own hotkey, Escape and the back
+  chevron fall to the root search instead of closing, and the launcher hotkey always opens the
+  root search. The edits are in `PaletteEscapeAction.swift`, `RootPaletteView.swift`,
+  `PaletteCoordinator.swift`, `Tests/palette-escape-test.swift` and `docs/features/palette.md`.
 
 `com.bradycast.app` lands on `ReleaseChannel.development`, so the app never checks GitHub for
 updates. Updating is a deliberate step here, so run `Scripts/bradycast.sh update` about every week
