@@ -49,12 +49,12 @@ final class PaletteCoordinator {
         windowController.isVisible && palette.mode == mode
     }
 
-    /// Always the root search: only a preserved launcher restores, never a screen summoned apart.
+    /// Shows or hides whatever screen is up; Escape, not this hotkey, leads back to root search.
     func togglePalette() {
-        if isShowing(.launcher) {
+        if windowController.isVisible {
             hidePalette()
         } else {
-            showPalette(mode: .launcher)
+            showPalette(mode: .launcher, restoreAnyMode: true)
         }
     }
 

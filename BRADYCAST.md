@@ -25,8 +25,8 @@ The source carries two fork-only changes, kept small so a tag merge rarely confl
   `docs/features/emoji.md`. On a conflict in `Tinycast.xcodeproj`, take upstream's and run
   `xcodegen generate`.
 - **Escape as a back button** — on a screen summoned by its own hotkey, Escape and the back
-  chevron fall to the root search instead of closing, and the launcher hotkey always opens the
-  root search. The edits are in `PaletteEscapeAction.swift`, `RootPaletteView.swift`,
+  chevron fall to the root search instead of closing, and the launcher hotkey shows or hides
+  whatever screen is up. The edits are in `PaletteEscapeAction.swift`, `RootPaletteView.swift`,
   `PaletteCoordinator.swift`, `Tests/palette-escape-test.swift` and `docs/features/palette.md`.
 
 `com.bradycast.app` lands on `ReleaseChannel.development`, so the app never checks GitHub for
