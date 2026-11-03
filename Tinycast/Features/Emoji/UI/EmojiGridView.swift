@@ -10,7 +10,7 @@ struct EmojiGridSection: Identifiable {
 }
 
 enum EmojiGrid {
-    static let suggestionsTitle = "AI Results"
+    static let suggestionsTitle = String(localized: "AI Results")
 
     /// Ranked results while searching, otherwise pinned, frequent and catalog sections in order.
     @MainActor
@@ -31,15 +31,19 @@ enum EmojiGrid {
         if trimmed.isEmpty {
             switch filter {
             case .all:
-                append("Pinned", pinned.glyphs.compactMap(index.entry(for:)))
-                append("Frequently Used", frequentlyUsed(frequent, in: index, columns: columns))
+                append(String(localized: "Pinned"), pinned.glyphs.compactMap(index.entry(for:)))
+                append(
+                    String(localized: "Frequently Used"),
+                    frequentlyUsed(frequent, in: index, columns: columns))
                 for section in index.categorySections {
                     append(section.category.title, section.entries)
                 }
             case .pinned:
-                append("Pinned", pinned.glyphs.compactMap(index.entry(for:)))
+                append(String(localized: "Pinned"), pinned.glyphs.compactMap(index.entry(for:)))
             case .frequentlyUsed:
-                append("Frequently Used", frequentlyUsed(frequent, in: index, columns: columns))
+                append(
+                    String(localized: "Frequently Used"),
+                    frequentlyUsed(frequent, in: index, columns: columns))
             case .category(let category):
                 if let section = index.categorySections.first(where: { $0.category == category }) {
                     append(section.category.title, section.entries)
@@ -62,7 +66,7 @@ enum EmojiGrid {
                 }
             }
             append(suggestionsTitle, filtered(suggestions.compactMap(index.entry(for:))))
-            append("Results", filtered(index.search(query, frequent: frequent)))
+            append(String(localized: "Results"), filtered(index.search(query, frequent: frequent)))
         }
         return sections
     }
@@ -88,7 +92,6 @@ private struct EmojiGridRow: Identifiable {
     }
 }
 
-/// Flat render order for one query: section headers and grid rows interleaved.
 private enum EmojiGridItem: Identifiable {
     case header(id: String, title: String, count: Int)
     case row(EmojiGridRow)
@@ -314,7 +317,6 @@ private struct EmojiGridRowView: View {
         .onRightClick { point in
             if let column = column(at: point) { onActions(row.start + column) }
         }
-        // Column hover, gated on real pointer movement like `armedHover`.
         .onContinuousHover(coordinateSpace: .local) { phase in
             switch phase {
             case .active(let point):

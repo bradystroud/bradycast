@@ -8,6 +8,7 @@ Kept as Tinycast on purpose: the copyright, the tinycast:// URL scheme's name, c
 such as TinycastApp (the whole-word match never touches them), and Support, whose checkout pays
 Tinycast's author. FORK_EDITS then say in About and Support that this is a fork of Tinycast.
 """
+import json
 import pathlib
 import re
 import sys
@@ -30,7 +31,7 @@ FORK_EDITS = {
         ('Text("© 2026 Abue Ammar · Released under AGPL-3.0")',
          'Text("Tinycast © 2026 Abue Ammar · Bradycast fork by Brady Stroud · AGPL-3.0")'),
         ("    static let all: [AboutLink] = [\n", "    static let all: [AboutLink] = [\n" + ABOUT_LINK),
-        ('title: "Website",', 'title: "Tinycast Website",'),
+        ('title: String(localized: "Website"),', 'title: "Tinycast Website",'),
         ('title: "GitHub",', 'title: "Tinycast on GitHub",'),
         ('detail: "@abue_ammar"', 'detail: "@abue_ammar, Tinycast\'s author"'),
     ),
@@ -38,7 +39,8 @@ FORK_EDITS = {
         ('Text("Support \\(Bundle.main.appDisplayName)")', 'Text("Support Tinycast")'),
         ('Text("Built with love.")',
          'Text("Bradycast is a fork of Tinycast. This supports its author, Abue Ammar.")'),
-        ('title: "Support \\(Bundle.main.appDisplayName)"', 'title: "Support Tinycast"'),
+        ('title: String(localized: "Support \\(Bundle.main.appDisplayName)")',
+         'title: String(localized: "Support Tinycast")'),
     ),
     "Features/Support/UI/SupportCoordinator.swift": (
         ('"Support Bradycast"', '"Support Tinycast"'),
@@ -47,10 +49,11 @@ FORK_EDITS = {
         ('return "Support Bradycast"', 'return "Support Tinycast"'),
     ),
     "Palette/RootPaletteView.swift": (
-        ('title: "Support Bradycast"', 'title: "Support Tinycast"'),
+        ('title: String(localized: "Support Bradycast")',
+         'title: String(localized: "Support Tinycast")'),
     ),
     "App/MenuBarItem.swift": (
-        ('Button("Support \\(appName)...")', 'Button("Support Tinycast...")'),
+        ('Button("Support \\(appName)…")', 'Button("Support Tinycast…")'),
     ),
 }
 RUNTIME_PHRASES = (
@@ -76,6 +79,32 @@ def swift(text: str):
             total += count
         lines.append(line)
     return "".join(lines), total
+
+
+def catalog(text: str):
+    """Rename keys and translations alike, so the renamed Swift keys still find theirs."""
+    data = json.loads(text)
+    total = 0
+
+    def rename(value):
+        nonlocal total
+        if isinstance(value, dict):
+            return {k: rename(v) for k, v in value.items()}
+        if isinstance(value, str):
+            value, count = WORD.subn("Bradycast", value)
+            total += count
+        return value
+
+    strings = {}
+    for key, entry in data["strings"].items():
+        if any(keep in key for keep in KEEP_LINES):
+            strings[key] = entry
+            continue
+        new_key = WORD.sub("Bradycast", key)
+        strings[new_key] = rename(entry)
+        total += new_key != key
+    data["strings"] = strings
+    return json.dumps(data, ensure_ascii=False, indent=2) + "\n", total
 
 
 def runtime(text: str):
@@ -106,6 +135,7 @@ def main() -> None:
     counts = {
         "swift": sum(rewrite(p, swift) for p in source.rglob("*.swift")),
         "plist": rewrite(source / "Info.plist", lambda t: PLIST_TEXT.subn(r"\1Bradycast\2", t)),
+        "catalog": sum(rewrite(p, catalog) for p in (source / "Resources").glob("*.xcstrings")),
         "runtime": rewrite(source / "Resources/RaycastRuntime.generated.js", runtime),
     }
     counts["fork"] = fork_edits(source)

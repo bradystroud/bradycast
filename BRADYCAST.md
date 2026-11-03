@@ -6,11 +6,15 @@ of the daily release stream.
 
 The build identity is all in `Scripts/bradycast.sh`: the name, bundle id `com.bradycast.app`, and
 the signing identity go on the `xcodebuild` line, the same way upstream's `release.yml` sets them per
-channel.
+channel. The bundle id goes in `TINYCAST_BUNDLE_IDENTIFIER`, which also gives the Dictation helper
+its own `com.bradycast.app.dictation`, and `DICTATION_EXECUTABLE_NAME` names that helper
+"Bradycast Dictation" to match the renamed source that looks it up.
 
 The build runs from a copy in `build/src`, where `Scripts/bradycast-rebrand.py` renames every
 user-visible "Tinycast" (Swift strings, `Info.plist` usage text, extension-runtime errors) to
-"Bradycast". The committed source keeps upstream's name, so the rename never conflicts. The
+"Bradycast". It renames the keys and every translation in `Resources/*.xcstrings` too, because
+those catalogs supply the shown text, the permission prompts included, and a renamed Swift key
+must still find its translations. The committed source keeps upstream's name, so the rename never conflicts. The
 script's `FORK_EDITS` then credit Tinycast: About says this is a fork, links both repos and keeps
 Abue Ammar's copyright, and Support stays "Support Tinycast", because its checkout pays him. The
 `tinycast://` scheme keeps its name. If the script reports that an edit or rename matched
@@ -43,8 +47,8 @@ or two. Upstream merges dozens of PRs a week, and a stale fork turns into a larg
 
 ```sh
 Scripts/bradycast.sh update            # fetch, list stable tags newer than the one on main
-git log --oneline v0.11.3..v0.11.9    # read what changed; PR numbers link to upstream
-Scripts/bradycast.sh update v0.11.9    # merge the tag
+git log --oneline v0.11.19..v0.12.1  # read what changed; PR numbers link to upstream
+Scripts/bradycast.sh update v0.12.1    # merge the tag
 Scripts/bradycast.sh install           # build, sign, replace /Applications/Bradycast.app, relaunch
 git push
 ```
